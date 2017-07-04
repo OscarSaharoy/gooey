@@ -12,4 +12,5 @@ The gooey script contains thorough commentary as well as a test script which is 
 The gooey library is imported alongside Tkinter, while gooey widgets can then be instantiated similarly to Tkinter widgets:
 
   import gooey, Tkinter
+  
   frame = gooey.Frame(parent)
