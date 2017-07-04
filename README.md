@@ -9,7 +9,7 @@ Gooey conforms to Tkinter syntax so closely that an existing Tkinter-dependant s
 
 The gooey script contains thorough commentary as well as a test script which is invoked when gooey.py is executed as the main program.
 
-The gooey library is imported alongside Tkinter, for example:
+The gooey library is imported alongside Tkinter, for example: \n
   import gooey, Tkinter
-Gooey widgets can then be instantiated similarly to Tkinter widgets:
+Gooey widgets can then be instantiated similarly to Tkinter widgets: \n
   frame = gooey.Frame(parent)
