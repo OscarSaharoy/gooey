@@ -5,7 +5,7 @@ Gooey improves and modernises the apperances of regular Tkinter widgets, includi
 Dynamic update of borders and highlights around widgets on mouseover gives a responsive and intuitive feel to applications designed using this library.
 Furthermore, new widgets include the Graph, Tooltip and Spacer, widening the capabilities of Tk for interface construction.
 
-Gooey conforms to Tkinter syntax so closely that an existing Tkinter-dependant script can be changed to import gooey rather than Tkinter with no errors, resulting in aesthetic improvement.
+Gooey conforms to Tkinter syntax so closely that an existing Tkinter-dependant script can be changed to import gooey rather than Tkinter without errors, resulting in aesthetic improvement.
 
 The gooey script contains thorough commentary as well as a test script which is invoked when gooey.py is executed as the main program.
 
