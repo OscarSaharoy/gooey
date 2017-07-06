@@ -1,5 +1,5 @@
 # gooey
-Adds new features and widgets on top of Tkinter (Tk/Tcl for Python).
+Python library which adds new features and widgets on top of Tkinter (Tk/Tcl for Python).
 
 Gooey improves and modernises the apperances of regular Tkinter widgets, including the Button, Frame, and Entry widgets.
 Dynamic update of borders and highlights around widgets on mouseover gives a responsive and intuitive feel to applications designed using this library.
