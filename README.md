@@ -8,3 +8,5 @@ Furthermore, new widgets include the Graph, Tooltip and Spacer, widening the cap
 Gooey conforms to Tkinter syntax so closely that an existing Tkinter-dependant script can be changed to import gooey rather than Tkinter with no errors, resulting in aesthetic improvement.
 
 The gooey script contains thorough commentary as well as a test script which is invoked when gooey.py is executed as the main program.
+
+![alt text](https://user-images.githubusercontent.com/29902113/27931805-67d583b0-6293-11e7-962a-18d32dc82be8.png)
