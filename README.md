@@ -11,3 +11,5 @@ The gooey script contains thorough commentary as well as a test script which is 
 
 ![alt text](https://user-images.githubusercontent.com/29902113/27931805-67d583b0-6293-11e7-962a-18d32dc82be8.png)
 Above: an application using gooey, showing the new palette as well as the Graph widget.
+
+Note that gooey is a placeholder name for the moment - I don't think this library will see many users anyway.
