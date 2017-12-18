@@ -651,11 +651,18 @@ class Spacer(tkinter.Frame):
         tkinter.Frame.configure(self,cnf)
     config = configure
 
+
 class Scale(Canvas):
+
+    '''Rebuilt scale widget is a canvas with a square which can be dragged across it.
+       Some functionality, such as vertical orientation and a built-in label, is lost.
+       However, the look of the widget is modernised.'''
 
     def __init__(self,parent,height=1,length=200,from_=0,to=100,highlightthickness=0,**kwargs):
 
         Canvas.__init__(self,parent,height=height,width=length,highlightthickness=highlightthickness)
+
+        # Bindings
 
         self.bind('<Configure>',self.build)
         self.bind('<Motion>',self.motion)
@@ -669,6 +676,7 @@ class Scale(Canvas):
         self.on_knob = False
 
     def build(self,_):
+        # Create the shapes on the canvas and set the value to self.val
 
         self.delete('all')
 
@@ -684,6 +692,7 @@ class Scale(Canvas):
         self.set(self.val)
 
     def motion(self,e):
+        # colours the outline of the knob darker on mouseover, and sets on_knob.
 
         x,y    = e.x,e.y
         knob   = self.coords(self.knob)
@@ -704,6 +713,7 @@ class Scale(Canvas):
 
 
     def B1_motion(self,e):
+        # Moves the knob along the canvas when B1 is held down
 
         dx     = e.x-self.x
         self.x = e.x
@@ -715,6 +725,8 @@ class Scale(Canvas):
 
             pos  = (knob[0]+knob[2])/2.0
 
+            # if the knob reaches the end of the line, it stops in place.
+
             if pos < self.r+self.s:
                 self.coords(self.knob,self.s,knob[1],self.h-self.s,knob[3])
 
@@ -722,6 +734,8 @@ class Scale(Canvas):
                 self.coords(self.knob,self.w-self.d-self.s,knob[1],self.w-self.s,knob[3])
 
     def get(self):
+
+        # retrieve the value from the scale - distance along line divided by length of line
 
         try:
 
@@ -737,9 +751,10 @@ class Scale(Canvas):
         
         except AttributeError:
 
-            val = self.val
+            # if this fails (widget is not built yet) then self.val is returned
+            pass
 
-        return val
+        return self.val
 
     def set(self,val):
 
@@ -747,17 +762,23 @@ class Scale(Canvas):
 
         try:
             w = self.w
+            # try to find self.w
         except AttributeError:
-            self.after(3,lambda: self.set(val))
+            # if self.w does not exist, the widget is not yet built
+            self.after(3,lambda: self.set(val)) # call self.est again later, when the widget is built
             return
 
         if val < min(self.from_,self.to) or val > max(self.from_,self.to):
+
+            # if val not inside range throw an error
 
             raise ValueError('value must be inside scale range')
 
         l    = self.w - self.d - self.s*2
         d    = self.to - self.from_
         pos  = (val - self.from_) / float(d) * l + self.r + self.s
+
+        # set knob to correct place
 
         self.coords(self.knob,pos-self.r,self.s,pos+self.r,self.h-self.s)
 
