@@ -11,6 +11,8 @@ except ImportError:
     from tkinter import font as tkFont
 import time,random,math,sys
 
+from tkinter import Message,Checkbutton,LabelFrame
+
 class GooeyException(Exception):
     pass
 
@@ -128,6 +130,10 @@ class Button(ReConfig,tkinter.Button):
         tkinter.Button.__init__(self,parent,bd=bd,state=state,**kwargs)
         ReConfig.__init__(self,kw='bg')
         self.gooey_kw = {'hovercolor':hovercolor}
+
+class Toplevel(tkinter.Toplevel):
+    def __init__(self,parent,**kwargs):
+        tkinter.Toplevel.__init__(self,parent,**kwargs)
 
 class Entry(ReConfig,tkinter.Entry):
     def __init__(self,parent,allowed=None,resize=False,hovercolor='grey80',bd=0,bg='white',highlightthickness=4,highlightbackground='grey90',highlightcolor='turquoise3',**kwargs):
@@ -280,9 +286,13 @@ class OptionMenu(ReConfig,tkinter.OptionMenu):
     making the syntax more intuitive and object-oriented.'''
 
 class CanvasLine(int):
+    ''' Gooey's Canvas shapes are subclasses of int and store the parent canvas as self._parent.
+        This means they can be controlled using the new methods below as well as those of the canvas. For example:
+            line = CanvasLine(canvas,x0,y0,x1,y1)
+        Is the same as
+            line = canvas.create_line(x0,y0,x1,y1)
+        except in the former case methods like line.coords can be used as well as the old canvas methods e.g. canvas.coords(line) '''
 
-    # Canvas shapes are subclasses of int and store the parent canvas as self._parent.
-    # This means they can be controlled using the new methods below as well as those of the canvas. 
     def __new__(self, parent, *args, **kw):
         self._shape  = parent.create_line(*args,**kw)
         self._parent = parent
@@ -641,6 +651,117 @@ class Spacer(tkinter.Frame):
         tkinter.Frame.configure(self,cnf)
     config = configure
 
+class Scale(Canvas):
+
+    def __init__(self,parent,height=1,length=200,from_=0,to=100,highlightthickness=0,**kwargs):
+
+        Canvas.__init__(self,parent,height=height,width=length,highlightthickness=highlightthickness)
+
+        self.bind('<Configure>',self.build)
+        self.bind('<Motion>',self.motion)
+        self.bind('<ButtonRelease-1>',self.motion)
+        self.bind('<B1-Motion>',self.B1_motion)
+
+        self.from_   = from_
+        self.to      = to
+
+        self.val     = from_
+        self.on_knob = False
+
+    def build(self,_):
+
+        self.delete('all')
+
+        self.h = self.winfo_height()
+        self.w = self.winfo_width()
+        self.s = 6
+        self.d = self.h-self.s*2
+        self.r = self.d/2.0
+
+        self.line = CanvasLine(self,      self.r+self.s,self.h/2.0,self.w-self.r-self.s,self.h/2.0,    width=2,fill='grey50')
+        self.knob = CanvasRectangle(self, self.s,self.s,self.h-self.s,self.h-self.s, width=5,outline='grey80',fill='white')
+
+        self.set(self.val)
+
+    def motion(self,e):
+
+        x,y    = e.x,e.y
+        knob   = self.coords(self.knob)
+        self.x = x
+
+        if (knob[0] <= x and x <= knob[2]) and not self.on_knob:
+            if knob[1] <= y and y <= knob[3]:
+                self.on_knob = True
+                self.itemconfig(self.knob,outline='grey70')
+
+        elif (knob[0] > x or x > knob[2]) and self.on_knob:
+            self.on_knob = False
+            self.itemconfig(self.knob,outline='grey80')
+        
+        elif (knob[1] > y or y > knob[3]) and self.on_knob:
+            self.on_knob = False
+            self.itemconfig(self.knob,outline='grey80')
+
+
+    def B1_motion(self,e):
+
+        dx     = e.x-self.x
+        self.x = e.x
+
+        if self.on_knob:
+
+            self.move(self.knob,dx,0)
+            knob = self.coords(self.knob)
+
+            pos  = (knob[0]+knob[2])/2.0
+
+            if pos < self.r+self.s:
+                self.coords(self.knob,self.s,knob[1],self.h-self.s,knob[3])
+
+            elif pos > self.w-self.r-self.s:
+                self.coords(self.knob,self.w-self.d-self.s,knob[1],self.w-self.s,knob[3])
+
+    def get(self):
+
+        try:
+
+            l    = self.w - self.d - self.s*2
+    
+            knob = self.coords(self.knob)
+            pos  = (knob[0]+knob[2])/2.0 - self.r - self.s
+    
+            d    = self.to - self.from_
+            val  = self.from_ + (pos/l)*d
+    
+            self.val = val
+        
+        except AttributeError:
+
+            val = self.val
+
+        return val
+
+    def set(self,val):
+
+        self.val = val
+
+        try:
+            w = self.w
+        except AttributeError:
+            self.after(3,lambda: self.set(val))
+            return
+
+        if val < min(self.from_,self.to) or val > max(self.from_,self.to):
+
+            raise ValueError('value must be inside scale range')
+
+        l    = self.w - self.d - self.s*2
+        d    = self.to - self.from_
+        pos  = (val - self.from_) / float(d) * l + self.r + self.s
+
+        self.coords(self.knob,pos-self.r,self.s,pos+self.r,self.h-self.s)
+
+
 class Graph(Canvas):
     ''' A graphing tool which allows data to be plotted on various scales, including a different scale on the x and y axes.
         Panning, zooming and centering of the graph is handled by internal methods, and data can be added and removed dynamically.
@@ -704,7 +825,7 @@ class Graph(Canvas):
         self._update()
 
     def graphx(self,value):
-        # Takes an x-value of the graph in units and returns its position on the Canvas in pixels.
+        # Takes an x-value on the graph in units and returns its position on the Canvas in pixels.
         try:
             value = float(value)
         except ValueError:
@@ -713,7 +834,7 @@ class Graph(Canvas):
         return self._origin[0]+value/self._xst*self._xpx
 
     def graphy(self,value):
-        # Takes a y-value of the graph in units and returns its position on the Canvas in pixels.
+        # Takes a y-value on the graph in units and returns its position on the Canvas in pixels.
         try:
             value = float(value)
         except ValueError:
@@ -942,7 +1063,7 @@ class Graph(Canvas):
         x_labels = x_lines//10+1
         y_labels = y_lines//10+1
 
-        # For each x-direction gridline, draws the gridline and places a label next to the fixed axis at regulart intervals.
+        # For each x-direction gridline, draws the gridline and places a label next to the fixed axis at regular intervals.
         for step in range(-x_lines_pre,x_lines_post+1):
             m = self._origin[0]+self._xpx*step
             if step != 0:
@@ -952,7 +1073,7 @@ class Graph(Canvas):
                 text = int(text) if text%1 == 0 else text
                 CanvasText(self,m,self.h-sq/1.3,text=str(text),fill='grey80',tag='label')
 
-        # For each y-direction gridline, draws the gridline and places a label next to the fixed axis at regulart intervals.
+        # For each y-direction gridline, draws the gridline and places a label next to the fixed axis at regular intervals.
         for step in range(-y_lines_pre,y_lines_post+1):
             m = self._origin[1]+self._ypx*step
             if step != 0:
@@ -1017,9 +1138,9 @@ if __name__ == '__main__':
             self.columnconfigure(0,weight=1)
             self.rowconfigure(2,weight=1)
 
-            self.datas = {'Gold'  :[(x,50/(x+6.0)+1.02**x+random.uniform(-1,1)*random.uniform(-1,1)*5+10)              for x in range(50)],
-                          'Silver':[(x,50/(-1.0-x)+1.06**x+random.uniform(-1,1)*random.uniform(-1,1)*12+50)            for x in range(60)],
-                          'Oil'   :[(x,200.0/(x+1)+10*math.tanh(30-x)+random.uniform(-1,1)*random.uniform(-1,1)*25+30) for x in range(40)]}
+            self.datas = {'Gold'  :[(x,50/(x+6.0)+1.02**x+random.uniform(-1,1)*random.uniform(-1,1)*5+10)              for x in range(30)],
+                          'Silver':[(x,50/(-1.0-x)+1.06**x+random.uniform(-1,1)*random.uniform(-1,1)*12+50)            for x in range(35)],
+                          'Oil'   :[(x,200.0/(x+1)+10*math.tanh(30-x)+random.uniform(-1,1)*random.uniform(-1,1)*25+30) for x in range(32)]}
 
             self.centering = True
             self.paused    = False
@@ -1031,7 +1152,7 @@ if __name__ == '__main__':
             self.title1.grid(sticky='w')
             Spacer(self,height=10).grid()
     
-            self.graph = Graph(self,dragable=True,width=1500,height=500,data=self.datas['Gold'],title='Gold',labelx='sec',labely='USD')
+            self.graph = Graph(self,dragable=True,width=1000,height=500,data=self.datas['Gold'],title='Gold',labelx='sec',labely='USD')
             self.graph.grid(sticky='nsew',row=2,rowspan=2)
             self.graph.bind('<B1-Motion>',self.motion,add='+')
             self.graph.bind_all('<MouseWheel>',self.motion,add='+')
